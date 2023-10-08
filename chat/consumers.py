@@ -4,13 +4,14 @@ import json
 from asgiref.sync import sync_to_async
 from channels.generic.websocket import AsyncWebsocketConsumer
 
+from chat.aes import AESCipher
 from chat.models import Room, Message
 
 
 class ChatConsumer(AsyncWebsocketConsumer):
     async def connect(self):
         self.room_name = self.scope["url_route"]["kwargs"]["room_name"]
-        self.room, _ = await sync_to_async(Room.objects.get_or_create)(
+        self.room = await sync_to_async(Room.objects.get)(
             name=self.room_name,
         )
         self.user = self.scope["url_route"]["kwargs"]["user"]
@@ -32,10 +33,12 @@ class ChatConsumer(AsyncWebsocketConsumer):
         message = text_data_json["message"]
 
         # create message object in database
+        aes = AESCipher(self.room.key)
+        ciphertext = aes.encrypt(message)
         await sync_to_async(Message.objects.create)(
             room=self.room,
             user=self.user,
-            message=message,
+            message=ciphertext,
         )
 
         # Send message to room

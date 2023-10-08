@@ -1,23 +1,27 @@
-<!DOCTYPE html>
-<html lang="en">
+{% extends "base.html" %}
 
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Home Page</title>
-</head>
+{% block content %}
 
-<body>
-    {% if error %}
-    <p>{{ error }}</p>
-    {% endif %}
+{% if error %}
+<div class="alert alert-danger" role="alert">
+    {{ error }}
+</div>
+{% endif %}
 
-    <form action="/chat/" method="post">
-        {% csrf_token %}
-        <input type="text" name="room_name" placeholder="Room Name">
-        <input type="text" name="user" placeholder="Your Nickname">
-        <input type="submit">
-    </form>
-</body>
+<form action="/chat/" method="post">
+    {% csrf_token %}
 
-</html>
+    <div class="mb-3">
+        <label for="room_name" class="form-label">Room Name</label>
+        <input type="text" class="form-control" id="room_name" name="room_name" aria-describedby="room_name_help">
+        <div id="room_name_help" class="form-text">New room will be created if doesn't exist.</div>
+    </div>
+    <div class="mb-3">
+        <label for="user" class="form-label">User Nickname</label>
+        <input type="text" class="form-control" id="user" name="user">
+    </div>
+    <button type="submit" class="btn btn-success">Join Chat Room</button>
+
+</form>
+
+{% endblock %}

@@ -1,4 +1,6 @@
 from django.shortcuts import render
+
+from chat.aes import get_enc_key
 from chat.models import Room, Message
 
 
@@ -19,7 +21,12 @@ def chat_page_view(request):
             },
         )
 
-    room, _ = Room.objects.get_or_create(name=room_name)
+    room, _ = Room.objects.get_or_create(
+        name=room_name,
+        defaults={
+            "key": get_enc_key(Room, "key"),
+        },
+    )
     messages = Message.objects.filter(
         room=room,
     ).order_by("created_at")
