@@ -42,7 +42,8 @@
         var message_box = document.getElementById("message_box");
         var message = document.createElement("div");
 
-        message.innerHTML = `<small class="badge bg-secondary">${data.user}:</small> ${data.message}`;
+        is_hate_speect = data.hate_speech ? "text-danger" : "";
+        message.innerHTML = `<small class="badge bg-secondary">${data.user}:</small> <span class="${is_hate_speect}">${data.message}</span>`;
         message_box.append(message);
         scrollToBottom();
     };

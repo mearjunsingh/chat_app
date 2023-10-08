@@ -5,6 +5,7 @@ from asgiref.sync import sync_to_async
 from channels.generic.websocket import AsyncWebsocketConsumer
 
 from chat.aes import AESCipher
+from chat.hate_speech import is_hate_speech
 from chat.models import Room, Message
 
 
@@ -32,23 +33,29 @@ class ChatConsumer(AsyncWebsocketConsumer):
         text_data_json = json.loads(text_data)
         message = text_data_json["message"]
 
-        # create message object in database
-        aes = AESCipher(self.room.key)
-        ciphertext = aes.encrypt(message)
-        await sync_to_async(Message.objects.create)(
-            room=self.room,
-            user=self.user,
-            message=ciphertext,
-        )
+        _message = "Message Not Sent, Hate Speech Detected"
+        _hate_speech = is_hate_speech(message)
+        if not _hate_speech:
+            # create message object in database
+            aes = AESCipher(self.room.key)
+            ciphertext = aes.encrypt(message)
+            await sync_to_async(Message.objects.create)(
+                room=self.room,
+                user=self.user,
+                message=ciphertext,
+            )
 
-        # Send message to room
-        message = html.escape(message)
+            # Parse message
+            _message = html.escape(message)
+
+        # Send message to room group
         await self.channel_layer.group_send(
             self.room_name,
             {
                 "type": "chat_message",
-                "message": message,
+                "message": _message,
                 "user": self.user,
+                "hate_specch": _hate_speech,
             },
         )
 
@@ -56,7 +63,8 @@ class ChatConsumer(AsyncWebsocketConsumer):
         # Get parameters from event
         message = event["message"]
         user = event["user"]
+        hate_speech = event["hate_specch"]
 
         # Send message to WebSocket
-        data = {"message": message, "user": user}
+        data = {"message": message, "user": user, "hate_speech": hate_speech}
         await self.send(text_data=json.dumps(data))
